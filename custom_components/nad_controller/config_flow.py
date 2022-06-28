@@ -12,8 +12,18 @@ from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_MODEL
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DOMAIN
 from .nad_client import NadClient
+
+DOMAIN = "NAD"
+
+NAD_OBJECT = "nad_object"
+UNDO_UPDATE_LISTENER = "update_update_listener"
+
+DATA_NAD = "nad_data"
+DATA_NAD_DISCOVERY_MANAGER = "nad_discovery_manager"
+MANUFACTURER = "Lenbrook Industries"
+MODEL = "DSP16-60"
+UDN_PREFIX = "uuid:NAD_CI 16-60_"
 
 DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): str,

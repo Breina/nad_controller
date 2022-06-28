@@ -16,8 +16,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
 from . import CONF_CLIENT
+from .config_flow import DOMAIN
 from .nad_client import NadClient
 
 _LOGGER = logging.getLogger(__name__)
