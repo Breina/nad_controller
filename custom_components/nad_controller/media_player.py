@@ -2,15 +2,20 @@
 import logging
 from enum import Enum
 
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
-    MediaPlayerEntityFeature, MediaPlayerDeviceClass,
+    MediaPlayerEntityFeature,
+    MediaPlayerDeviceClass,
+    PLATFORM_SCHEMA
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from const import DOMAIN
 import socket
@@ -41,10 +46,10 @@ class PowerMethod(Enum):
 
 class NadClient:
 
-    def __init__(self, ip):
-        self._ip = ip
+    def __init__(self, host):
+        self._host = host
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect((ip, TCP_PORT))
+        self._socket.connect((host, TCP_PORT))
 
     def send(self, hex_string):
         self._socket.send(bytearray.fromhex(hex_string))
@@ -230,15 +235,21 @@ class NadClient:
         return self.to_string(self.send(command))
 
 
-async def async_setup_entry(
-        hass: HomeAssistant,
-        config_entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+    vol.Required(CONF_HOST): cv.string
+})
+
+
+def setup_platform(
+    hass: HomeAssistant,
+    config: ConfigType,
+    add_entities: AddEntitiesCallback,
+    discovery_info: DiscoveryInfoType | None = None
 ) -> None:
     """Set up the NAD Cl 16-60 home audio controller platform."""
-    ip = config_entry.data[CONF_HOST]
+    host = config[CONF_HOST]
 
-    client = NadClient(ip)
+    client = NadClient(host)
 
     amp = NadAmp(client)
 
@@ -249,7 +260,7 @@ async def async_setup_entry(
             NadChannel(client, amp, output_channel_index)
         )
 
-    async_add_entities(entities)
+    add_entities(entities)
 
 
 class SoundMode(Enum):
