@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from const import DOMAIN
+from .const import DOMAIN
 from . import CONF_CLIENT
 from .nad_client import NadClient
 

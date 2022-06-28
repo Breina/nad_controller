@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_MODEL
 from homeassistant.data_entry_flow import FlowResult
 
-from const import DOMAIN
+from .const import DOMAIN
 from .nad_client import NadClient
 
 DATA_SCHEMA = vol.Schema({

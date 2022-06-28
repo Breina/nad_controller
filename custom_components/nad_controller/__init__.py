@@ -7,8 +7,7 @@ from homeassistant.const import CONF_HOST, Platform, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from custom_components.nad_controller.const import DOMAIN, DATA_NAD_DISCOVERY_MANAGER, MANUFACTURER, MODEL, UDN_PREFIX, \
-    DATA_NAD
+from .const import DOMAIN, DATA_NAD_DISCOVERY_MANAGER, MANUFACTURER, MODEL, UDN_PREFIX, DATA_NAD
 from .nad_client import NadClient, DEFAULT_TCP_PORT
 
 CONF_CLIENT = "client"
