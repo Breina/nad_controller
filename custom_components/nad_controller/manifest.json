@@ -1,9 +1,19 @@
 {
-    "domain": "nad_controller",
-    "name": "NAD Cl 16-60 controller integration",
-    "documentation": "https://github.com/Breina/nad_controller",
-    "dependencies": [],
-    "codeowners": ["Breina"],
-    "requirements": [],
-    "version": "0.0.1"
-  }
+  "domain": "nad_controller",
+  "name": "NAD Cl 16-60 controller integration",
+  "documentation": "https://github.com/Breina/nad_controller",
+  "issue_tracker": "https://github.com/Breina/nad_controller/issues",
+  "codeowners": [
+    "Breina"
+  ],
+  "requirements": [],
+  "iot_class": "local_polling",
+  "config_flow": true,
+  "version": "0.0.1",
+  "ssdp": [
+    {
+      "manufacturer": "Lenbrook Industries",
+      "modelName": "DSP16-60"
+    }
+  ]
+}
