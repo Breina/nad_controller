@@ -64,7 +64,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 self.host = user_input["host"]
-                self.port = user_input["post"]
+                self.port = user_input["port"]
                 # return self.async_create_entry(title=user_input[CONF_HOST], data=info)
                 return await self.async_step_connect()
             except CannotConnect:
