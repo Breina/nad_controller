@@ -48,6 +48,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         self.model_name = None
 
     async def async_step_user(self, user_input=None):
+        _LOGGER.info("Entering async step user")
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
@@ -62,6 +63,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
 
+        _LOGGER.info("Going to async_show_form")
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
@@ -69,19 +71,21 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_confirm(
             self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        _LOGGER.info("async_step_confirm")
         """Allow the user to confirm adding the device."""
         if user_input is not None:
             return await self.async_step_connect()
 
         self._set_confirm_only()
+        _LOGGER.info("Going to async_show_form")
         return self.async_show_form(step_id="confirm")
 
     async def async_step_connect(
             self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        _LOGGER.info("Entering async_step_connect")
         """Connect to the controller."""
         try:
-
             client = NadClient(self.host, self.port)
         except (Exception):
             return self.async_abort(reason="cannot_connect")
@@ -103,6 +107,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
             )
             self._async_abort_entries_match({CONF_HOST: self.host, CONF_PORT: self.port})
 
+        _LOGGER.info("Going to async_create_entry")
         return self.async_create_entry(
             title=client.get_project_name(),
             data={
@@ -114,6 +119,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_ssdp(self, discovery_info: ssdp.SsdpServiceInfo) -> FlowResult:
+        _LOGGER.info("Entering async_step_ssdp")
         """Handle a discovered Denon AVR.
         This flow is triggered by the SSDP component. It will check if the
         host is already configured and delegate to the import step if not.
@@ -132,6 +138,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(self.udn)
         self._abort_if_unique_id_configured({CONF_HOST: self.host})
 
+        _LOGGER.info("Going to context.update")
         self.context.update(
             {
                 "title_placeholders": {
@@ -152,6 +159,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
 
 @core.callback
 def _key_for_source(index, source, previous_sources):
+    _LOGGER.info("Entering _key_for_source")
     if str(index) in previous_sources:
         key = vol.Optional(
             source, description={"suggested_value": previous_sources[str(index)]}

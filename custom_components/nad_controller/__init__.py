@@ -1,4 +1,4 @@
-"""The NAD Cl 16-60 home audio intagration."""
+"""The NAD Cl 16-60 home audio integration."""
 import logging
 
 import voluptuous as vol
