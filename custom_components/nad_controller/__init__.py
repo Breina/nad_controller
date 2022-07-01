@@ -19,8 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Entering async_setup_entry")
     """Set up NAD Cl 16-60 from a config entry."""
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {}
+    hass.data.setdefault(DOMAIN, {})
 
     _LOGGER.info("0")
     config = hass.data[DOMAIN].get(Platform.MEDIA_PLAYER, {})
