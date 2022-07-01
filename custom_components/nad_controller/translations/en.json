@@ -1,0 +1,27 @@
+{
+  "config": {
+    "flow_title": "NAD Cl 16-80",
+    "step": {
+      "user": {
+        "data": {
+          "host": "Host"
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "Leave blank to use auto-discovery",
+          "port": "Leave blank to use auto-discovery"
+        }
+      },
+      "confirm": {
+        "description": "Please confirm adding the controller"
+      }
+    },
+    "error": {
+      "discovery_error": "Failed to discover a NAD Cl 16-60 home audio controller"
+    },
+    "abort": {
+      "cannot_connect": "Failed to connect, please try again, disconnecting mains power and ethernet cables and reconnecting them may help",
+      "not_nad_missing": "Not a NAD Cl 16-60 home audio controller, discovery information not complete"
+    }
+  }
+}
