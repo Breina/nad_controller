@@ -35,6 +35,16 @@ _LOGGER = logging.getLogger(__name__)
 CONF_SERIAL_NUMBER = "serial_number"
 
 
+async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+) -> FlowResult:
+    """Manage the options."""
+    if user_input is not None:
+        return self.async_create_entry(title="", data=user_input)
+
+    return self.async_show_form(step_id="init", data_schema=DATA_SCHEMA)
+
+
 class NetworkFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for NAD Cl-16-60 home audio controller."""
 
