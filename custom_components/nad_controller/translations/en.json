@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "data": {
-          "host": "Host"
+          "host": "Host",
           "port": "Port"
         },
         "data_description": {
