@@ -14,7 +14,7 @@ from homeassistant.data_entry_flow import FlowResult
 
 from .nad_client import NadClient
 
-DOMAIN = "NAD"
+DOMAIN = "nad_controller"
 
 NAD_OBJECT = "nad_object"
 UNDO_UPDATE_LISTENER = "update_update_listener"
