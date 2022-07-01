@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant import core, exceptions
 from homeassistant.components import ssdp
 from homeassistant.config_entries import ConfigFlow
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_MODEL
+from homeassistant.const import CONF_IP_ADDRESS, CONF_PORT, CONF_MODEL
 from homeassistant.data_entry_flow import FlowResult
 
 from .nad_client import NadClient, DEFAULT_TCP_PORT
@@ -26,7 +26,7 @@ MODEL = "DSP16-60"
 UDN_PREFIX = "uuid:NAD_CI 16-60_"
 
 DATA_SCHEMA = vol.Schema({
-    vol.Required(CONF_HOST): str,
+    vol.Required(CONF_IP_ADDRESS): str,
     vol.Optional(CONF_PORT): int
 })
 
@@ -53,7 +53,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self):
         self.serial_number = None
         self.udn = None
-        self.host = None
+        self.ip = None
         self.port = None
         self.model_name = None
 
@@ -63,9 +63,8 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
-                self.host = user_input.get("host")
-                self.port = user_input.get("port", DEFAULT_TCP_PORT)
-                # return self.async_create_entry(title=user_input[CONF_HOST], data=info)
+                self.ip = user_input.get(CONF_IP_ADDRESS)
+                self.port = user_input.get(CONF_PORT, DEFAULT_TCP_PORT)
                 return await self.async_step_connect()
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -96,7 +95,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         _LOGGER.info("Entering async_step_connect")
         """Connect to the controller."""
         try:
-            client = NadClient(self.host, self.port)
+            client = NadClient(self.ip, self.port)
         except (Exception):
             return self.async_abort(reason="cannot_connect")
 
@@ -111,17 +110,17 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
         else:
             _LOGGER.error(
-                "Could not get serial number of host %s, "
+                "Could not get serial number of ip %s, "
                 "unique_id's will not be available",
-                self.host,
+                self.ip,
             )
-            self._async_abort_entries_match({CONF_HOST: self.host, CONF_PORT: self.port})
+            self._async_abort_entries_match({CONF_IP_ADDRESS: self.ip, CONF_PORT: self.port})
 
         _LOGGER.info("Going to async_create_entry")
         return self.async_create_entry(
             title=client.get_project_name(),
             data={
-                CONF_HOST: self.host,
+                CONF_IP_ADDRESS: self.ip,
                 CONF_PORT: self.port,
                 CONF_MODEL: self.model_name,
                 CONF_SERIAL_NUMBER: self.serial_number,
@@ -132,7 +131,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         _LOGGER.info("Entering async_step_ssdp")
         """Handle a discovered Denon AVR.
         This flow is triggered by the SSDP component. It will check if the
-        host is already configured and delegate to the import step if not.
+        ip address is already configured and delegate to the import step if not.
         """
         # Check if required information is present to set the unique_id
         if (
@@ -143,17 +142,19 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
 
         self.model_name = discovery_info.upnp[ssdp.ATTR_UPNP_MODEL_NAME]
         self.udn = discovery_info.upnp[ssdp.ATTR_UPNP_UDN]
-        self.host = urlparse(discovery_info.ssdp_location).hostname
+        self.ip = urlparse(discovery_info.ssdp_location).hostname
+
+        _LOGGER.info(f"Discovered IP address: {self.ip}")
 
         await self.async_set_unique_id(self.udn)
-        self._abort_if_unique_id_configured({CONF_HOST: self.host})
+        self._abort_if_unique_id_configured({CONF_IP_ADDRESS: self.ip})
 
         _LOGGER.info("Going to context.update")
         self.context.update(
             {
                 "title_placeholders": {
                     "name": discovery_info.upnp.get(
-                        ssdp.ATTR_UPNP_FRIENDLY_NAME, self.host
+                        ssdp.ATTR_UPNP_FRIENDLY_NAME, self.ip
                     )
                 }
             }

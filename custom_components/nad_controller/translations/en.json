@@ -4,11 +4,11 @@
     "step": {
       "user": {
         "data": {
-          "host": "Host",
+          "ip_address": "IP",
           "port": "Port"
         },
         "data_description": {
-          "host": "Leave blank to use auto-discovery",
+          "ip_address": "Leave blank to use auto-discovery",
           "port": "Leave blank to use auto-discovery"
         }
       },

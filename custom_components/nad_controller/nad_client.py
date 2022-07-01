@@ -24,10 +24,10 @@ class PowerMethod(Enum):
 
 class NadClient:
 
-    def __init__(self, host: str, port=DEFAULT_TCP_PORT):
-        self._host = host
+    def __init__(self, ip: str, port=DEFAULT_TCP_PORT):
+        self._ip = ip
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect((host, port))
+        self._socket.connect((ip, port))
 
     def send(self, hex_string):
         self._socket.send(bytearray.fromhex(hex_string))

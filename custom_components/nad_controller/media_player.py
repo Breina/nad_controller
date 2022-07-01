@@ -2,16 +2,12 @@
 import logging
 from enum import Enum
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
-    MediaPlayerDeviceClass,
-    PLATFORM_SCHEMA
+    MediaPlayerDeviceClass
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -21,10 +17,6 @@ from .config_flow import DOMAIN
 from .nad_client import NadClient
 
 _LOGGER = logging.getLogger(__name__)
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string
-})
 
 
 async def async_setup_entry(

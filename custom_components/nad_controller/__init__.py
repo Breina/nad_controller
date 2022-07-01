@@ -2,7 +2,7 @@
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, Platform, CONF_PORT
+from homeassistant.const import CONF_IP_ADDRESS, Platform, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
@@ -22,12 +22,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     config = hass.data[DOMAIN].get(Platform.MEDIA_PLAYER, {})
-    host = config.get(CONF_HOST)
+    ip = config.get(CONF_IP_ADDRESS)
     port = config.get(CONF_PORT, DEFAULT_TCP_PORT)
 
     try:
-        _LOGGER.info(f"host: {host} port: {port}")
-        client = NadClient(host, port)
+        _LOGGER.info(f"ip: {ip} port: {port}")
+        client = NadClient(ip, port)
     except (Exception) as ex:
         raise ConfigEntryNotReady from ex
 
