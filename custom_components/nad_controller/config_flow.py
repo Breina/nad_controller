@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_MODEL
 from homeassistant.data_entry_flow import FlowResult
 
-from .nad_client import NadClient
+from .nad_client import NadClient, DEFAULT_TCP_PORT
 
 DOMAIN = "nad_controller"
 
@@ -63,8 +63,8 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
-                self.host = user_input["host"]
-                self.port = user_input["port"]
+                self.host = user_input.get("host")
+                self.port = user_input.get("port", DEFAULT_TCP_PORT)
                 # return self.async_create_entry(title=user_input[CONF_HOST], data=info)
                 return await self.async_step_connect()
             except CannotConnect:
