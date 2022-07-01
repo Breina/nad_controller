@@ -24,7 +24,7 @@ class PowerMethod(Enum):
 
 class NadClient:
 
-    def __init__(self, host, port = DEFAULT_TCP_PORT):
+    def __init__(self, host: str, port=DEFAULT_TCP_PORT):
         self._host = host
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect((host, port))

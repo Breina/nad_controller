@@ -21,17 +21,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up NAD Cl 16-60 from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    _LOGGER.info("0")
     config = hass.data[DOMAIN].get(Platform.MEDIA_PLAYER, {})
-    _LOGGER.info("1")
     host = config.get(CONF_HOST)
-    _LOGGER.info("2")
     port = config.get(CONF_PORT, DEFAULT_TCP_PORT)
-    _LOGGER.info("3")
 
     try:
+        _LOGGER.info(f"host: {host} port: {port}")
         client = NadClient(host, port)
-        _LOGGER.info("4")
     except (Exception) as ex:
         raise ConfigEntryNotReady from ex
 
