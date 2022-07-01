@@ -1,7 +1,6 @@
 """The NAD Cl 16-60 home audio integration."""
 import logging
 
-import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -16,27 +15,28 @@ PLATFORMS = [Platform.MEDIA_PLAYER]
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_SCHEMA = vol.Schema({
-    vol.Required(CONF_HOST): str,
-    vol.Optional(CONF_PORT): int
-})
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Entering async_setup_entry")
     """Set up NAD Cl 16-60 from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
+    _LOGGER.info("0")
     config = hass.data[DOMAIN].get(Platform.MEDIA_PLAYER, {})
+    _LOGGER.info("1")
     host = config.get(CONF_HOST)
+    _LOGGER.info("2")
     port = config.get(CONF_PORT, DEFAULT_TCP_PORT)
+    _LOGGER.info("3")
 
     try:
         client = NadClient(host, port)
+        _LOGGER.info("4")
     except (Exception) as ex:
         raise ConfigEntryNotReady from ex
 
     undo_listener = entry.add_update_listener(update_listener)
+    _LOGGER.info("5")
 
     hass.data[DOMAIN][entry.entry_id] = {
         CONF_CLIENT: client,
