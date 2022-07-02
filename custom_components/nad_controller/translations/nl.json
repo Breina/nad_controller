@@ -1,0 +1,25 @@
+{
+  "config": {
+    "flow_title": "NAD meerkamersgeluidbestuurder",
+    "step": {
+      "user": {
+        "data": {
+          "ip_address": "IP",
+          "port": "Poort"
+        }
+      },
+      "confirm": {
+        "description": "Gelieve de aanmaak hiervan te bevestigen"
+      }
+    },
+    "error": {
+      "discovery_error": "NAD meerkamersgeluidbestuurder kon niet worden gevonden",
+      "already_in_progress": "Deze configuratie toveraar is al actief. Ga verder met degene die al actief is.",
+      "unknown": "Onbekende fout, gelieve dat even te melden: https://github.com/Breina/nad_controller/issues"
+    },
+    "abort": {
+      "cannot_connect": "Kon niet verbinden, probeer a.u.b. opnieuw. Moest het dan nog niet lukken, probeer het apparaat herop te starten en uw verbinding te controleren.",
+      "not_nad_missing": "Dit is geen NAD meerkamersgeluidbestuurder, ontdekkingsinformatie onvolledig"
+    }
+  }
+}
