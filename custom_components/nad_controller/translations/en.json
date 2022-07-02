@@ -6,10 +6,6 @@
         "data": {
           "ip_address": "IP",
           "port": "Port"
-        },
-        "data_description": {
-          "ip_address": "Leave blank to use auto-discovery",
-          "port": "Leave blank to use auto-discovery"
         }
       },
       "confirm": {
@@ -21,7 +17,8 @@
     },
     "abort": {
       "cannot_connect": "Failed to connect, please try again, disconnecting mains power and ethernet cables and reconnecting them may help",
-      "not_nad_missing": "Not a NAD multi-room home audio controller, discovery information not complete"
+      "not_nad_missing": "Not a NAD multi-room home audio controller, discovery information not complete",
+      "already_in_progress": "This config flow is already active. Please configure the integration that has been automatically discovered."
     }
   }
 }

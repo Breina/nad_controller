@@ -7,11 +7,11 @@ from urllib.parse import urlparse
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-from homeassistant import core, exceptions
+from homeassistant import core, exceptions, data_entry_flow
 from homeassistant.components import ssdp
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_IP_ADDRESS, CONF_PORT, CONF_MODEL
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.data_entry_flow import FlowResult, AbortFlow
 
 from .nad_client import NadClient, DEFAULT_TCP_PORT
 
@@ -68,6 +68,8 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_connect()
             except CannotConnect:
                 errors["base"] = "cannot_connect"
+            except AbortFlow:
+                errors["base"] = "already_in_progress"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
