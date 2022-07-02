@@ -1,4 +1,4 @@
-"""Support for interfacing with NAD Cl 16-60 home audio controller."""
+"""Support for interfacing with NAD multi-room audio controller."""
 import logging
 from enum import Enum
 
@@ -24,7 +24,7 @@ async def async_setup_entry(
         config_entry: ConfigEntry,
         async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the NAD Cl 16-60 home audio controller entry."""
+    """Set up the NAD Cl multi-room audio controller entry."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     client = data[CONF_CLIENT]
 

@@ -1,4 +1,4 @@
-"""The NAD Cl 16-60 home audio integration."""
+"""The NAD Cl multi-room audio controller integration."""
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Entering async_setup_entry")
-    """Set up NAD Cl 16-60 from a config entry."""
+    """Set up NAD multi-room audio controller from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
     ip = entry.data.get(CONF_IP_ADDRESS)

@@ -1,6 +1,6 @@
 {
   "config": {
-    "flow_title": "NAD Multi-room Audio Controller",
+    "flow_title": "NAD Multi-room Audio",
     "step": {
       "user": {
         "data": {
@@ -17,7 +17,7 @@
       }
     },
     "error": {
-      "discovery_error": "Failed to discover a NAD Cl 16-60 home audio controller"
+      "discovery_error": "Failed to discover a NAD multi-room audio home audio controller"
     },
     "abort": {
       "cannot_connect": "Failed to connect, please try again, disconnecting mains power and ethernet cables and reconnecting them may help",

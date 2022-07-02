@@ -1,4 +1,4 @@
-"""Config flow for NAD Cl-16-60 home audio controller integration."""
+"""Config flow for NAD multi-room audio controller integration."""
 from __future__ import annotations
 
 import logging
@@ -6,6 +6,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import voluptuous as vol
+import homeassistant.helpers.config_validation as cv
 from homeassistant import core, exceptions
 from homeassistant.components import ssdp
 from homeassistant.config_entries import ConfigFlow
@@ -22,12 +23,11 @@ UNDO_UPDATE_LISTENER = "update_update_listener"
 DATA_NAD = "nad_data"
 DATA_NAD_DISCOVERY_MANAGER = "nad_discovery_manager"
 MANUFACTURER = "Lenbrook Industries"
-MODEL = "DSP16-60"
 UDN_PREFIX = "uuid:NAD_CI 16-60_"
 
 DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_IP_ADDRESS): str,
-    vol.Optional(CONF_PORT): int
+    vol.Optional(CONF_PORT, default=DEFAULT_TCP_PORT): cv.port
 })
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ async def async_step_init(
 
 
 class NetworkFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for NAD Cl-16-60 home audio controller."""
+    """Handle a config flow for NAD multi-room audio controller."""
 
     VERSION = 1
 
