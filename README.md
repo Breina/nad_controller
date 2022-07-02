@@ -29,6 +29,51 @@ One channel is created for every output. Available services:
 * `media_player.select_source`
 * `media_player.select_sound_mode`
 
+#### Sources
+
+When calling `media_player.select_source`, the _Source_ must be one of:
+
+* `Global1`
+* `Global2`
+* `Source1`
+* `Source2`
+* `Source3`
+* `Source4`
+* `Source5`
+* `Source6`
+* `Source7`
+* `Source8`
+* `Source9`
+* `Source10`
+* `Source11`
+* `Source12`
+* `Source13`
+* `Source14`
+* `Source15`
+* `Source16`
+
+> **Warning**
+> 
+> Selecting the global inputs will override the inputs of all channels.
+> Manually selecting an input afterwards turns global mode off again and channels' source is set back to its original value.
+
+
+#### Sound modes
+
+When calling `media_player.select_sound_mode`, the _Sound mode_ must be one of:
+
+* `PresentNone`
+* `Preset1`
+* `Preset2`
+* `Preset3`
+* `Preset4`
+* `Preset5`
+* `Preset6`
+* `Preset7`
+* `Preset8`
+* `Preset9`
+
+
 ## Compatible devices
 
 * NAD Cl 16-60

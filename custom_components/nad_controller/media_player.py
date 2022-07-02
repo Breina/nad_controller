@@ -85,7 +85,6 @@ class NadAmp(MediaPlayerEntity):
         self._client = client
 
         self._attr_device_class = MediaPlayerDeviceClass.RECEIVER
-        self._attr_sound_mode_list = [sm.name for sm in SoundMode]
 
         device_name = client.get_device_name()
         serial_number = client.get_serial_number()
@@ -143,6 +142,7 @@ class NadChannel(MediaPlayerEntity):
         self._client = client
         self._output_channel = output_index
 
+        self._attr_sound_mode_list = [sm.name for sm in SoundMode]
         self._attr_source_list = [source.name for source in InputSource]
         self._attr_device_class = MediaPlayerDeviceClass.SPEAKER
 
