@@ -211,6 +211,3 @@ class NadClient:
 
     def test_command(self, command: str):
         return self.to_string(self.send(command))
-
-
-NadClient("192").get_device_name()
