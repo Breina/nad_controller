@@ -210,7 +210,7 @@ class NadChannel(MediaPlayerEntity):
     def state(self) -> str | None:
         if self.is_volume_muted:
             return "Muted"
-        else
+        else:
             return "Playing"
 
     def select_source(self, source):
