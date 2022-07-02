@@ -2,6 +2,7 @@
 import logging
 from enum import Enum
 
+from homeassistant import exceptions
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
@@ -202,8 +203,8 @@ class NadChannel(MediaPlayerEntity):
         return f"{'Global' if self._is_global else 'Input'}{self._source_index}"
 
     def select_source(self, source):
-        if source not in InputSource:
-            return
+        if source not in self._attr_source_list:
+            raise InvalidSource(f"The input source should be one of {self._attr_source_list}")
 
         (is_global, index) = InputSource[source].value
 
@@ -219,4 +220,23 @@ class NadChannel(MediaPlayerEntity):
         self._is_global = is_global
 
     def select_sound_mode(self, sound_mode):
+        if sound_mode is in self._attr_sound_mode_list:
+            raise InvalidSoundMode(f"The sound mode should be one of {self._attr_sound_mode_list}")
         self._client.set_output_preset(self._output_channel, SoundMode[sound_mode].value)
+
+
+class InvalidSource(exceptions.IntegrationError):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    """Error to indicate we cannot connect."""
+    def __str__(self) -> str:
+        return self.msg
+
+class InvalidSoundMode(exceptions.IntegrationError):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    """Error to indicate we cannot connect."""
+    def __str__(self) -> str:
+        return self.msg
