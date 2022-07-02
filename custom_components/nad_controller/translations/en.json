@@ -13,12 +13,13 @@
       }
     },
     "error": {
-      "discovery_error": "Failed to discover a NAD multi-room audio home audio controller"
+      "discovery_error": "Failed to discover a NAD multi-room audio home audio controller",
+      "already_in_progress": "This config flow is already active. Please configure the integration that has been automatically discovered.",
+      "unknown": "Unknown error, please report an issue: https://github.com/Breina/nad_controller/issues"
     },
     "abort": {
       "cannot_connect": "Failed to connect, please try again, disconnecting mains power and ethernet cables and reconnecting them may help",
       "not_nad_missing": "Not a NAD multi-room home audio controller, discovery information not complete",
-      "already_in_progress": "This config flow is already active. Please configure the integration that has been automatically discovered."
     }
   }
 }

@@ -75,7 +75,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
 
         return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=errors
+            step_id="user", data_schema=DATA_SCHEMA, errors=errors, last_step=True
         )
 
     async def async_step_confirm(
@@ -86,7 +86,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_connect()
 
         self._set_confirm_only()
-        return self.async_show_form(step_id="confirm")
+        return self.async_show_form(step_id="confirm", last_step=True)
 
     async def async_step_connect(
             self, user_input: dict[str, Any] | None = None
