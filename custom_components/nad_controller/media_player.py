@@ -41,37 +41,37 @@ async def async_setup_entry(
 
 
 class SoundMode(Enum):
-    PresetNone: 0
-    Preset1: 1
-    Preset2: 2
-    Preset3: 3
-    Preset4: 4
-    Preset5: 5
-    Preset6: 6
-    Preset7: 7
-    Preset8: 8
-    Preset9: 9
+    PresetNone = 0
+    Preset1 = 1
+    Preset2 = 2
+    Preset3 = 3
+    Preset4 = 4
+    Preset5 = 5
+    Preset6 = 6
+    Preset7 = 7
+    Preset8 = 8
+    Preset9 = 9
 
 
 class InputSource(Enum):
-    Global1: (True, 1)
-    Global2: (True, 2)
-    Source1: (False, 1)
-    Source2: (False, 2)
-    Source3: (False, 3)
-    Source4: (False, 4)
-    Source5: (False, 5)
-    Source6: (False, 6)
-    Source7: (False, 7)
-    Source8: (False, 8)
-    Source9: (False, 9)
-    Source10: (False, 10)
-    Source11: (False, 11)
-    Source12: (False, 12)
-    Source13: (False, 13)
-    Source14: (False, 14)
-    Source15: (False, 15)
-    Source16: (False, 16)
+    Global1 = (True, 1)
+    Global2 = (True, 2)
+    Source1 = (False, 1)
+    Source2 = (False, 2)
+    Source3 = (False, 3)
+    Source4 = (False, 4)
+    Source5 = (False, 5)
+    Source6 = (False, 6)
+    Source7 = (False, 7)
+    Source8 = (False, 8)
+    Source9 = (False, 9)
+    Source10 = (False, 10)
+    Source11 = (False, 11)
+    Source12 = (False, 12)
+    Source13 = (False, 13)
+    Source14 = (False, 14)
+    Source15 = (False, 15)
+    Source16 = (False, 16)
 
 
 class NadAmp(MediaPlayerEntity):
