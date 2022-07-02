@@ -1,6 +1,6 @@
 {
   "domain": "nad_controller",
-  "name": "NAD Cl 16-60 controller integration",
+  "name": "NAD multi-room audio",
   "documentation": "https://github.com/Breina/nad_controller",
   "issue_tracker": "https://github.com/Breina/nad_controller/issues",
   "codeowners": [

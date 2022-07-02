@@ -25,7 +25,6 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the NAD Cl 16-60 home audio controller entry."""
-    entities = []
     data = hass.data[DOMAIN][config_entry.entry_id]
     client = data[CONF_CLIENT]
 
@@ -150,12 +149,6 @@ class NadChannel(MediaPlayerEntity):
         self._attr_name = f"{amp.name} channel {self._output_channel}"
 
         self._attr_device_info = amp.device_info
-        # self._attr_device_info = DeviceInfo(
-        #     identifiers={(DOMAIN, self._attr_unique_id)},
-        #     name=self._attr_name,
-        #     manufacturer="NAD",
-        #     via_device=(DOMAIN, amp.unique_id)
-        # )
 
         self._source_index = None
         self._is_global = False

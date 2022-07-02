@@ -51,6 +51,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     def __init__(self):
+        self.client = None
         self.serial_number = None
         self.udn = None
         self.ip = None
@@ -96,14 +97,15 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         _LOGGER.info("Entering async_step_connect")
         """Connect to the controller."""
         try:
-            client = NadClient(self.ip, self.port)
+            if self.client is None:
+                self.client = NadClient(self.ip, self.port)
         except (Exception):
             return self.async_abort(reason="cannot_connect")
 
         if not self.serial_number:
-            self.serial_number = client.get_serial_number()
+            self.serial_number = self.client.get_serial_number()
         if not self.model_name:
-            self.model_name = client.get_device_model()
+            self.model_name = self.client.get_device_model()
 
         if self.serial_number is not None:
             unique_id = self.construct_unique_id(self.model_name, self.serial_number)
@@ -119,7 +121,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
 
         _LOGGER.info(f"Going to async_create_entry with IP {self.ip}")
         return self.async_create_entry(
-            title=client.get_project_name(),
+            title=self.client.get_device_name(),
             data={
                 CONF_IP_ADDRESS: self.ip,
                 CONF_PORT: self.port,
@@ -142,9 +144,18 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
 
         self.model_name = discovery_info.upnp[ssdp.ATTR_UPNP_MODEL_NAME]
         self.udn = discovery_info.upnp[ssdp.ATTR_UPNP_UDN]
-        self.ip = urlparse(discovery_info.ssdp_location).hostname
+        self.ip = str(urlparse(discovery_info.ssdp_location).hostname)
+        self.port = DEFAULT_TCP_PORT
 
-        await self.async_set_unique_id(self.udn)
+        try:
+            if self.client is None:
+                self.client = NadClient(self.ip, self.port)
+            self.model_name = self.client.get_device_model()
+            self.serial_number = self.client.get_serial_number()
+        except (Exception):
+            return self.async_abort(reason="cannot_connect")
+
+        await self.async_set_unique_id(self.construct_unique_id(self.model_name, self.serial_number))
         self._abort_if_unique_id_configured({CONF_IP_ADDRESS: self.ip})
 
         _LOGGER.info("Going to context.update")
