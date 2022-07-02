@@ -125,7 +125,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_ssdp(self, discovery_info: ssdp.SsdpServiceInfo) -> FlowResult:
-        """Handle a discovered Denon AVR.
+        """Handle a discovered NAD controller.
         This flow is triggered by the SSDP component. It will check if the
         ip address is already configured and delegate to the import step if not.
         """

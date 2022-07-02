@@ -17,11 +17,12 @@
       }
     },
     "error": {
-      "discovery_error": "Failed to discover a NAD multi-room audio controller"
+      "discovery_error": "Failed to discover a NAD multi-room audio controller",
     },
     "abort": {
       "cannot_connect": "Failed to connect, please try again, disconnecting mains power and ethernet cables and reconnecting them may help",
-      "not_nad_missing": "Not a NAD multi-room audio controller, discovery information not complete"
+      "not_nad_missing": "Not a NAD multi-room audio controller, discovery information not complete",
+      "already_in_progress": "This config flow is already active. Please configure the integration that has been automatically discovered.",
     }
   }
 }
