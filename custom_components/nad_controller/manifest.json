@@ -1,6 +1,6 @@
 {
   "domain": "nad_controller",
-  "name": "NAD multi-room audio",
+  "name": "NAD Multi-room Audio Controller",
   "documentation": "https://github.com/Breina/nad_controller",
   "issue_tracker": "https://github.com/Breina/nad_controller/issues",
   "codeowners": [

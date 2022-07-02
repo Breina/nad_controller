@@ -1,5 +1,5 @@
 {
-    "name": "NAD Cl 16-60 controller integration",
+    "name": "NAD Multi-room Audio Controller",
     "domains": ["media_player"],
     "render_readme": true
   }
