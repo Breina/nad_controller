@@ -220,7 +220,7 @@ class NadChannel(MediaPlayerEntity):
         self._is_global = is_global
 
     def select_sound_mode(self, sound_mode):
-        if sound_mode is in self._attr_sound_mode_list:
+        if sound_mode not in self._attr_sound_mode_list:
             raise InvalidSoundMode(f"The sound mode should be one of {self._attr_sound_mode_list}")
         self._client.set_output_preset(self._output_channel, SoundMode[sound_mode].value)
 
