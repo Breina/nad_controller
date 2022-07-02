@@ -85,8 +85,7 @@ The flow can now proceed in one of two ways:
 
  4. Enter the IP and Port (52000 by default) and press _SUBMIT_
 
-
-
+![The dialog prompting network parameters](images/Manual_flow_1_enter_network_params.png)
 
  5. After optionally setting its area and confirming with _FINISH_, the integration is now active and ready to be used.
 

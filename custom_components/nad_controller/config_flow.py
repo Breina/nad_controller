@@ -59,12 +59,10 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         self.model_name = None
 
     async def async_step_user(self, user_input=None):
-        _LOGGER.info("Entering async step user")
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
             try:
-                _LOGGER.info(f"{user_input}")
                 self.ip = user_input.get(CONF_IP_ADDRESS)
                 self.port = user_input.get(CONF_PORT, DEFAULT_TCP_PORT)
                 return await self.async_step_connect()
@@ -74,7 +72,6 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
 
-        _LOGGER.info("Going to async_show_form")
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
@@ -82,24 +79,22 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_confirm(
             self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        _LOGGER.info("async_step_confirm")
         """Allow the user to confirm adding the device."""
         if user_input is not None:
             return await self.async_step_connect()
 
         self._set_confirm_only()
-        _LOGGER.info("Going to async_show_form")
         return self.async_show_form(step_id="confirm")
 
     async def async_step_connect(
             self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        _LOGGER.info("Entering async_step_connect")
         """Connect to the controller."""
         try:
             if self.client is None:
                 self.client = NadClient(self.ip, self.port)
-        except (Exception):
+        except Exception as e:
+            _LOGGER.exception(e)
             return self.async_abort(reason="cannot_connect")
 
         if not self.serial_number:
@@ -119,7 +114,6 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
             )
             self._async_abort_entries_match({CONF_IP_ADDRESS: self.ip, CONF_PORT: self.port})
 
-        _LOGGER.info(f"Going to async_create_entry with IP {self.ip}")
         return self.async_create_entry(
             title=self.client.get_device_name(),
             data={
@@ -158,7 +152,6 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(self.construct_unique_id(self.model_name, self.serial_number))
         self._abort_if_unique_id_configured({CONF_IP_ADDRESS: self.ip})
 
-        _LOGGER.info("Going to context.update")
         self.context.update(
             {
                 "title_placeholders": {
@@ -179,7 +172,6 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
 
 @core.callback
 def _key_for_source(index, source, previous_sources):
-    _LOGGER.info("Entering _key_for_source")
     if str(index) in previous_sources:
         key = vol.Optional(
             source, description={"suggested_value": previous_sources[str(index)]}
