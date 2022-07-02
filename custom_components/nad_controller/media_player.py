@@ -107,7 +107,7 @@ class NadAmp(MediaPlayerEntity):
     def update(self):
         """Retrieve latest state."""
         try:
-            self._state = self._client.get_power_status()
+            self._attr_state = self._client.get_power_status().split(':')[1]
             self._update_success = True
         except Exception:
             self._update_success = False
@@ -121,12 +121,15 @@ class NadAmp(MediaPlayerEntity):
 
     def turn_on(self):
         self._client.power_on()
+        self._attr_state = "On"
 
     def turn_off(self):
         self._client.power_off()
+        self._attr_state = "Off"
 
     async def async_toggle(self):
         await self._client.power_toggle()
+        self._attr_state = {"On": "Off", "Off": "On"}[self._attr_state]
 
 
 class NadChannel(MediaPlayerEntity):
@@ -195,12 +198,20 @@ class NadChannel(MediaPlayerEntity):
 
     def mute_volume(self, mute):
         self._client.set_output_mute(self._output_channel, mute)
+        self._attr_is_volume_muted = mute
 
     @property
     def source(self):
         if self._source_index is None:
             return None
         return f"{'Global' if self._is_global else 'Input'}{self._source_index}"
+
+    @property
+    def state(self) -> str | None:
+        if self.is_volume_muted:
+            return "Muted"
+        else
+            return "Playing"
 
     def select_source(self, source):
         if source not in self._attr_source_list:
@@ -232,6 +243,7 @@ class InvalidSource(exceptions.IntegrationError):
     """Error to indicate we cannot connect."""
     def __str__(self) -> str:
         return self.msg
+
 
 class InvalidSoundMode(exceptions.IntegrationError):
     def __init__(self, msg: str):
