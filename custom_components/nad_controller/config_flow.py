@@ -63,6 +63,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
+                _LOGGER.info(f"{user_input}")
                 self.ip = user_input.get(CONF_IP_ADDRESS)
                 self.port = user_input.get(CONF_PORT, DEFAULT_TCP_PORT)
                 return await self.async_step_connect()
@@ -116,7 +117,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
             )
             self._async_abort_entries_match({CONF_IP_ADDRESS: self.ip, CONF_PORT: self.port})
 
-        _LOGGER.info("Going to async_create_entry")
+        _LOGGER.info(f"Going to async_create_entry with IP {self.ip}")
         return self.async_create_entry(
             title=client.get_project_name(),
             data={
@@ -128,7 +129,6 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_ssdp(self, discovery_info: ssdp.SsdpServiceInfo) -> FlowResult:
-        _LOGGER.info("Entering async_step_ssdp")
         """Handle a discovered Denon AVR.
         This flow is triggered by the SSDP component. It will check if the
         ip address is already configured and delegate to the import step if not.
@@ -143,8 +143,6 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         self.model_name = discovery_info.upnp[ssdp.ATTR_UPNP_MODEL_NAME]
         self.udn = discovery_info.upnp[ssdp.ATTR_UPNP_UDN]
         self.ip = urlparse(discovery_info.ssdp_location).hostname
-
-        _LOGGER.info(f"Discovered IP address: {self.ip}")
 
         await self.async_set_unique_id(self.udn)
         self._abort_if_unique_id_configured({CONF_IP_ADDRESS: self.ip})

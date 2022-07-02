@@ -149,12 +149,13 @@ class NadChannel(MediaPlayerEntity):
         self._attr_unique_id = f"{amp.unique_id}_{self._output_channel}"
         self._attr_name = f"{amp.name} channel {self._output_channel}"
 
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._attr_unique_id)},
-            name=self._attr_name,
-            manufacturer="NAD",
-            via_device=amp.device_info.get('identifiers')[0]
-        )
+        self._attr_device_info = amp.device_info
+        # self._attr_device_info = DeviceInfo(
+        #     identifiers={(DOMAIN, self._attr_unique_id)},
+        #     name=self._attr_name,
+        #     manufacturer="NAD",
+        #     via_device=(DOMAIN, amp.unique_id)
+        # )
 
         self._source_index = None
         self._is_global = False
@@ -179,11 +180,12 @@ class NadChannel(MediaPlayerEntity):
         return self._update_success
 
     @property
-    def volume_level(self) -> float | None:
+    def volume_level(self):
         """Volume level of the media player (0..1)."""
         if self._volume is None:
             return None
-        return (self._volume + 6) / 12
+        _LOGGER.info(f"Floaty: {self._volume}")
+        return (float(self._volume) + 6) / 12
 
     def set_volume_level(self, volume):
         self._volume = volume * 12 - 6
@@ -201,7 +203,7 @@ class NadChannel(MediaPlayerEntity):
         self._client.set_output_mute(self._output_channel, mute)
 
     @property
-    def source(self) -> str | None:
+    def source(self):
         if self._source_index is None:
             return None
         return f"{'Global' if self._is_global else 'Input'}{self._source_index}"
