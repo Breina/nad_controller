@@ -1,5 +1,4 @@
 {
     "name": "NAD Multi-room Audio Controller",
-    "domains": ["media_player"],
     "render_readme": true
   }
