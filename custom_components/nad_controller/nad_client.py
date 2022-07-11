@@ -211,6 +211,3 @@ class NadClient:
 
     def test_command(self, command: str):
         return self.to_string(self.send(command))
-
-
-print(NadClient("192.168.1.110").power_toggle())
