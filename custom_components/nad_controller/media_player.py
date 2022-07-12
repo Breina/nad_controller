@@ -207,7 +207,7 @@ class NadChannel(MediaPlayerEntity):
         return f"{'Global' if self._is_global else 'Input'}{self._source_index}"
 
     @property
-    def state(self) -> str | None:
+    def state(self):
         if self.is_volume_muted:
             return "Muted"
         else:
