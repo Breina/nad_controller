@@ -11,8 +11,14 @@ One entity will be created for the controller itself, and one for each channel.
 
 ![An overview of all entities](images/Overview.png)
 
-_The entity is named after the `Unit Name`, as configured in NAD's web interface._
-_In this case, that's 'Fortie'._
+_The entity is named after the `Unit Name`, as configured in NAD's web interface.
+In this case, that's 'Fortie'._
+
+![A detail view of one channel](images/Detail_view.png)
+
+_The detail view can be used to configure 
+an output's volume, input channel selection and its sound mode,
+as defined by its presets._
 
 ### Receiver entity
 
@@ -20,6 +26,10 @@ The receiver is only used to control the power. Available services:
 * `media_player.turn_on`
 * `media_player.turn_off`
 * `media_player.toggle`
+* `media_player.select_source`
+
+Note that using the `select_source` on the receiver will override the channel specific source configuration,
+until it's set back to 'None'.
 
 ### Channel entities
 
@@ -30,51 +40,6 @@ One channel is created for every output. Available services:
 * `media_player.volume_mute`
 * `media_player.select_source`
 * `media_player.select_sound_mode`
-
-#### Sources
-
-When calling `media_player.select_source`, the _Source_ must be one of:
-
-* `Global1`
-* `Global2`
-* `Source1`
-* `Source2`
-* `Source3`
-* `Source4`
-* `Source5`
-* `Source6`
-* `Source7`
-* `Source8`
-* `Source9`
-* `Source10`
-* `Source11`
-* `Source12`
-* `Source13`
-* `Source14`
-* `Source15`
-* `Source16`
-
-> **Warning**
-> 
-> Selecting the global inputs will override the inputs of all channels.
-> Manually selecting an input afterwards turns global mode off again and channels' source is set back to its original value.
-
-
-#### Sound modes
-
-When calling `media_player.select_sound_mode`, the _Sound mode_ must be one of:
-
-* `PresentNone`
-* `Preset1`
-* `Preset2`
-* `Preset3`
-* `Preset4`
-* `Preset5`
-* `Preset6`
-* `Preset7`
-* `Preset8`
-* `Preset9`
-
 
 ## Compatible devices
 

@@ -1,5 +1,8 @@
+import logging
 import socket
 from enum import Enum
+
+_LOGGER = logging.getLogger(__name__)
 
 DEFAULT_TCP_PORT = 52000
 BUFFER_SIZE = 1024
@@ -31,7 +34,9 @@ class NadClient:
 
     def send(self, hex_string):
         self._socket.send(bytearray.fromhex(hex_string))
-        return self._socket.recv(BUFFER_SIZE)
+        response = self._socket.recv(BUFFER_SIZE)
+        _LOGGER.debug(response)
+        return response
 
     @staticmethod
     def to_string(byte_text: bytes):

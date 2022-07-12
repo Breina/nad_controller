@@ -54,31 +54,35 @@ class SoundMode(Enum):
     Preset9 = 9
 
 
+class GlobalSource(Enum):
+    Global1 = 0
+    Global2 = 1
+
+
 class InputSource(Enum):
-    Global1 = (True, 1)
-    Global2 = (True, 2)
-    Source1 = (False, 1)
-    Source2 = (False, 2)
-    Source3 = (False, 3)
-    Source4 = (False, 4)
-    Source5 = (False, 5)
-    Source6 = (False, 6)
-    Source7 = (False, 7)
-    Source8 = (False, 8)
-    Source9 = (False, 9)
-    Source10 = (False, 10)
-    Source11 = (False, 11)
-    Source12 = (False, 12)
-    Source13 = (False, 13)
-    Source14 = (False, 14)
-    Source15 = (False, 15)
-    Source16 = (False, 16)
+    Source1 = 1
+    Source2 = 2
+    Source3 = 3
+    Source4 = 4
+    Source5 = 5
+    Source6 = 6
+    Source7 = 7
+    Source8 = 8
+    Source9 = 9
+    Source10 = 10
+    Source11 = 11
+    Source12 = 12
+    Source13 = 13
+    Source14 = 14
+    Source15 = 15
+    Source16 = 16
 
 
 class NadAmp(MediaPlayerEntity):
     _attr_supported_features = (
             MediaPlayerEntityFeature.TURN_ON
             | MediaPlayerEntityFeature.TURN_OFF
+            | MediaPlayerEntityFeature.SELECT_SOURCE
     )
 
     def __init__(self, client: NadClient):
@@ -90,12 +94,17 @@ class NadAmp(MediaPlayerEntity):
         serial_number = client.get_serial_number()
         model = client.get_device_model()
         sw_version = client.get_firmware_version()
+
+        self._attr_source_list = [source.name for source in GlobalSource]
+        self._attr_source_list.append("None")
+        self._source = None
+
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, serial_number)},
             manufacturer="NAD",
             model=model,
             name=device_name,
-            sw_version=sw_version,
+            sw_version=sw_version
         )
 
         self._attr_unique_id = serial_number
@@ -109,9 +118,9 @@ class NadAmp(MediaPlayerEntity):
         try:
             self._attr_state = self._client.get_power_status().split(':')[1]
             self._update_success = True
-        except Exception:
+        except Exception as e:
             self._update_success = False
-            _LOGGER.warning("Could not update")
+            _LOGGER.warning("Could not update: %s", e)
             return
 
     @property
@@ -119,17 +128,45 @@ class NadAmp(MediaPlayerEntity):
         """Return if the entity should be enabled when first added to the entity registry."""
         return self._update_success
 
-    def turn_on(self):
+    async def async_turn_on(self):
         self._client.power_on()
         self._attr_state = "On"
 
-    def turn_off(self):
+    async def async_turn_off(self):
         self._client.power_off()
         self._attr_state = "Off"
 
     async def async_toggle(self):
         await self._client.power_toggle()
         self._attr_state = {"On": "Off", "Off": "On"}[self._attr_state]
+
+    @property
+    def source(self):
+        return self._source.name if self._source is not None else None
+
+    async def async_select_source(self, source):
+        if source not in self._attr_source_list:
+            raise InvalidSource(f"The global source should be one of {self._attr_source_list}")
+
+        await self.ensure_device_is_on()
+
+        new_source = GlobalSource[source] if source != "None" else None
+
+        if self._source == new_source:
+            return
+
+        if self._source is not None:
+            self._client.set_global_control(self._source.value, False)
+
+        self._source = new_source
+
+        if self._source is not None:
+            self._client.set_global_control(self._source.value, True)
+
+    async def ensure_device_is_on(self):
+        if self.state == "Off":
+            await self.async_turn_on()
+            self.async_schedule_update_ha_state()
 
 
 class NadChannel(MediaPlayerEntity):
@@ -146,16 +183,19 @@ class NadChannel(MediaPlayerEntity):
         self._output_channel = output_index
 
         self._attr_sound_mode_list = [sm.name for sm in SoundMode]
-        self._attr_source_list = [source.name for source in InputSource]
+        self._sound_mode = None
+
         self._attr_device_class = MediaPlayerDeviceClass.SPEAKER
+
+        self._attr_source_list = [source.name for source in InputSource]
+        self._attr_source_list.append("None")
+        self._source = None
 
         self._attr_unique_id = f"{amp.unique_id}_{self._output_channel}"
         self._attr_name = f"{amp.name} channel {self._output_channel}"
-
         self._attr_device_info = amp.device_info
+        self._amp = amp
 
-        self._source_index = None
-        self._is_global = False
         self._snapshot = None
         self._volume = None
         self._update_success = True
@@ -166,9 +206,9 @@ class NadChannel(MediaPlayerEntity):
             self._volume = self._client.get_output_gain(self._output_channel)
             self._attr_is_volume_muted = self._client.get_output_mute(self._output_channel)
             self._update_success = True
-        except Exception:
+        except Exception as e:
             self._update_success = False
-            _LOGGER.warning("Could not update output index %d", self._output_channel)
+            _LOGGER.warning("Could not update output index %d: %s", self._output_channel, e)
             return
 
     @property
@@ -181,30 +221,35 @@ class NadChannel(MediaPlayerEntity):
         """Volume level of the media player (0..1)."""
         if self._volume is None:
             return None
-        _LOGGER.info(f"Floaty: {self._volume}")
         return (float(self._volume) + 6) / 12
 
     def set_volume_level(self, volume):
+        self._amp.ensure_device_is_on()
+
         self._volume = volume * 12 - 6
         self._client.set_output_gain(self._output_channel, self._volume)
 
     async def async_volume_up(self):
-        await self._client.set_output_gain(self._output_channel, self._volume + 0.5)
+        await self._amp.ensure_device_is_on()
+
+        self._client.set_output_gain(self._output_channel, self._volume + 0.5)
         self._volume += 0.5
 
     async def async_volume_down(self):
-        await self._client.set_output_gain(self._output_channel, self._volume - 0.5)
+        await self._amp.ensure_device_is_on()
+
+        self._client.set_output_gain(self._output_channel, self._volume - 0.5)
         self._volume -= 0.5
 
     def mute_volume(self, mute):
+        self._amp.ensure_device_is_on()
+
         self._client.set_output_mute(self._output_channel, mute)
         self._attr_is_volume_muted = mute
 
     @property
     def source(self):
-        if self._source_index is None:
-            return None
-        return f"{'Global' if self._is_global else 'Input'}{self._source_index}"
+        return self._source.name if self._source is not None else None
 
     @property
     def state(self):
@@ -213,42 +258,46 @@ class NadChannel(MediaPlayerEntity):
         else:
             return "Playing"
 
-    def select_source(self, source):
+    async def async_select_source(self, source):
         if source not in self._attr_source_list:
-            raise InvalidSource(f"The input source should be one of {self._attr_source_list}")
+            raise InvalidSource(f"The global source should be one of {self._attr_source_list}")
 
-        (is_global, index) = InputSource[source].value
+        await self._amp.ensure_device_is_on()
 
-        if ((not is_global) and self._is_global) or (is_global and (index != self._source_index)):
-            self._client.set_global_control(self._source_index, False)
+        self._source = InputSource[source]
+        self._client.set_output_source(self._output_channel, self._source.value)
 
-        if is_global:
-            self._client.set_global_control(index, True)
-        else:
-            self._client.set_output_source(self._output_channel, index)
-
-        self._source_index = index
-        self._is_global = is_global
-
-    def select_sound_mode(self, sound_mode):
+    async def async_select_sound_mode(self, sound_mode):
         if sound_mode not in self._attr_sound_mode_list:
             raise InvalidSoundMode(f"The sound mode should be one of {self._attr_sound_mode_list}")
+
+        await self._amp.ensure_device_is_on()
+
+        self._sound_mode = SoundMode[sound_mode]
         self._client.set_output_preset(self._output_channel, SoundMode[sound_mode].value)
+
+    @property
+    def sound_mode(self):
+        return self._sound_mode.name if self._sound_mode is not None else None
+
+    @property
+    def enabled(self) -> bool:
+        return self._amp.state == "On"
 
 
 class InvalidSource(exceptions.IntegrationError):
     def __init__(self, msg: str):
+        """Error to indicate we cannot connect."""
         self.msg = msg
 
-    """Error to indicate we cannot connect."""
     def __str__(self) -> str:
         return self.msg
 
 
 class InvalidSoundMode(exceptions.IntegrationError):
     def __init__(self, msg: str):
+        """Error to indicate we cannot connect."""
         self.msg = msg
 
-    """Error to indicate we cannot connect."""
     def __str__(self) -> str:
         return self.msg
