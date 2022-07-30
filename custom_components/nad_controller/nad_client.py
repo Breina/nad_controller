@@ -50,6 +50,10 @@ class NadClient:
     def int_to_hex(i: int):
         return '{:02X}'.format(i)
 
+    @property
+    def ip(self):
+        return self._ip
+
     def global_input_to_hex(self, global_input: int):
         if not 1 <= global_input <= 2:
             raise ValueError("Channel should be either 1 or 2")

@@ -100,6 +100,7 @@ class NadAmp(MediaPlayerEntity):
         self._source = None
 
         self._attr_device_info = DeviceInfo(
+            configuration_url=f"http://{client.ip}",
             identifiers={(DOMAIN, serial_number)},
             manufacturer="NAD",
             model=model,

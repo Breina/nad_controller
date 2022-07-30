@@ -7,10 +7,10 @@ from urllib.parse import urlparse
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-from homeassistant import core, exceptions, data_entry_flow
+from homeassistant import core, exceptions
 from homeassistant.components import ssdp
 from homeassistant.config_entries import ConfigFlow
-from homeassistant.const import CONF_IP_ADDRESS, CONF_PORT, CONF_MODEL
+from homeassistant.const import CONF_IP_ADDRESS, CONF_PORT
 from homeassistant.data_entry_flow import FlowResult, AbortFlow
 
 from .nad_client import NadClient, DEFAULT_TCP_PORT
@@ -33,6 +33,7 @@ DATA_SCHEMA = vol.Schema({
 _LOGGER = logging.getLogger(__name__)
 
 CONF_SERIAL_NUMBER = "serial_number"
+CONF_MODEL = "model"
 
 
 async def async_step_init(
@@ -58,7 +59,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         self.port = None
         self.model_name = None
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input=None) -> FlowResult:
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
@@ -88,9 +89,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         self._set_confirm_only()
         return self.async_show_form(step_id="confirm", last_step=True)
 
-    async def async_step_connect(
-            self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_connect(self) -> FlowResult:
         """Connect to the controller."""
         try:
             if self.client is None:
