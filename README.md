@@ -1,6 +1,7 @@
 # NAD Multi-room Audio Controller Integration
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+
 
 This integration integrates with NAD multi-room audio amplifiers.
 It provides control over output volume, output muting, input selection, DSP presets and power cycling.
@@ -52,14 +53,11 @@ One channel is created for every output. Available services:
 > This integration requires [HACS](https://github.com/hacs/integration) to be installed
 
 1. Open HACS
-2. Open the options in the top right and select _Custom repositories_
-3. Enter this repository's URL (`https://github.com/Breina/nad_controller`) under the Category _Integration_.
-4. Press _Add_
-5. _+ EXPLORE & DOWNLOAD REPOSITORIES_
-6. Find _NAD Multi-room Audio Controller_ in this list
-7. _DOWNLOAD THIS REPOSITORY WITH HACS_
-8. _DOWNLOAD_
-9. Restart Home Assistant (_Settings_ > _System_ >  _RESTART_)
+2. _+ EXPLORE & DOWNLOAD REPOSITORIES_
+3. Find _NAD Multi-room Audio Controller_ in this list
+4. _DOWNLOAD THIS REPOSITORY WITH HACS_
+5. _DOWNLOAD_
+6. Restart Home Assistant (_Settings_ > _System_ >  _RESTART_)
 
 The flow can now proceed in one of two ways:
 
