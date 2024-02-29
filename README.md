@@ -50,7 +50,7 @@ One channel is created for every output. Available services:
 
 > **Note**
 > 
-> This integration requires [HACS](https://github.com/hacs/integration) to be installed
+> This integration requires [HACS](https://hacs.xyz/docs/setup/download/) to be installed
 
 1. Open HACS
 2. _+ EXPLORE & DOWNLOAD REPOSITORIES_
