@@ -105,7 +105,6 @@ class NadAmp(MediaPlayerEntity):
         sw_version = client.get_firmware_version()
 
         self._attr_source_list = [source.name for source in GlobalSource.__members__.values()]
-        self._attr_source_list.append("None")
         self._source = None
 
         self._attr_device_info = DeviceInfo(
