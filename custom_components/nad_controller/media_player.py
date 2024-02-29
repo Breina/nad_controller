@@ -74,8 +74,8 @@ async def async_setup_entry(
     amp = NadAmp(client)
 
     entities = [amp]
-    for output_channel_index in range(1, 16):
-        _LOGGER.info(f"Adding channel {outputs[output_channel_index]}")
+    for output_channel_index in range(1, 17):
+        _LOGGER.info(f"Adding channel {outputs[output_channel_index - 1]}")
         entities.append(
             NadChannel(hass, client, amp, output_channel_index, outputs[output_channel_index - 1], inputs, presets)
         )
