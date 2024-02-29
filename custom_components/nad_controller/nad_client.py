@@ -2,6 +2,9 @@ import logging
 import socket
 from enum import Enum
 
+import requests
+from homeassistant.core import HomeAssistant
+
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_TCP_PORT = 52000
@@ -217,6 +220,9 @@ class NadClient:
     def get_power_status(self):
         # Power status:On
         return self.to_string(self.send("FF550170"))
+
+    def read_in_out(self):
+        return requests.get(f"http://{self.ip}/Web/Handler.php?page=in-out&action=read").json()
 
     def test_command(self, command: str):
         return self.to_string(self.send(command))

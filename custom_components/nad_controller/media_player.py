@@ -1,12 +1,13 @@
 """Support for interfacing with NAD multi-room audio controller."""
 import logging
+from dataclasses import dataclass
 from enum import Enum
 
 from homeassistant import exceptions
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
-    MediaPlayerDeviceClass
+    MediaPlayerDeviceClass, MediaPlayerState
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -20,6 +21,28 @@ from .nad_client import NadClient
 _LOGGER = logging.getLogger(__name__)
 
 
+@dataclass
+class InputChannel:
+    name: str
+    gain: float
+    value: int
+
+
+@dataclass
+class Preset:
+    name: str
+    value: int
+
+
+@dataclass
+class OutputChannel:
+    name: str
+    gain: float
+    value: int
+    source: InputChannel
+    dsp_preset: Preset
+
+
 async def async_setup_entry(
         hass: HomeAssistant,
         config_entry: ConfigEntry,
@@ -27,55 +50,41 @@ async def async_setup_entry(
 ) -> None:
     """Set up the NAD Cl multi-room audio controller entry."""
     data = hass.data[DOMAIN][config_entry.entry_id]
-    client = data[CONF_CLIENT]
+    client: NadClient = data[CONF_CLIENT]
+
+    in_outs = await hass.async_add_executor_job(client.read_in_out)
+
+    inputs = [InputChannel(
+        in_outs['input-names'][i]['name'],
+        float(in_outs['input-gain'][i]),
+        int(in_outs['input-names'][i]['value'])
+    ) for i in range(len(in_outs['input-names']))]
+
+    presets = [Preset(dsp_item['name'], int(dsp_item['value'])) for dsp_item in in_outs['dsp-preset-items']]
+
+    outputs = [OutputChannel(
+        in_outs['output-names'][i]['name'],
+        float(in_outs['output-gain'][i]),
+        int(in_outs['output-names'][i]['value']),
+        inputs[in_outs['sources'][i]],
+        presets[in_outs['dsp-presets'][i]]
+    ) for i in range(len(in_outs['output-names']))]
 
     amp = NadAmp(client)
 
     entities = [amp]
     for output_channel_index in range(1, 16):
-        _LOGGER.info("Adding channel %d", output_channel_index)
+        _LOGGER.info(f"Adding channel {outputs[output_channel_index]}")
         entities.append(
-            NadChannel(client, amp, output_channel_index)
+            NadChannel(client, amp, output_channel_index, outputs[output_channel_index], inputs, presets)
         )
 
     async_add_entities(entities, update_before_add=True)
 
 
-class SoundMode(Enum):
-    PresetNone = 0
-    Preset1 = 1
-    Preset2 = 2
-    Preset3 = 3
-    Preset4 = 4
-    Preset5 = 5
-    Preset6 = 6
-    Preset7 = 7
-    Preset8 = 8
-    Preset9 = 9
-
-
 class GlobalSource(Enum):
     Global1 = 0
     Global2 = 1
-
-
-class InputSource(Enum):
-    Source1 = 1
-    Source2 = 2
-    Source3 = 3
-    Source4 = 4
-    Source5 = 5
-    Source6 = 6
-    Source7 = 7
-    Source8 = 8
-    Source9 = 9
-    Source10 = 10
-    Source11 = 11
-    Source12 = 12
-    Source13 = 13
-    Source14 = 14
-    Source15 = 15
-    Source16 = 16
 
 
 class NadAmp(MediaPlayerEntity):
@@ -95,7 +104,7 @@ class NadAmp(MediaPlayerEntity):
         model = client.get_device_model()
         sw_version = client.get_firmware_version()
 
-        self._attr_source_list = [source.name for source in GlobalSource]
+        self._attr_source_list = [source.name for source in GlobalSource.__members__.values()]
         self._attr_source_list.append("None")
         self._source = None
 
@@ -108,7 +117,7 @@ class NadAmp(MediaPlayerEntity):
             sw_version=sw_version
         )
 
-        self._attr_unique_id = serial_number
+        self._attr_unique_id = f"{DOMAIN}_{serial_number}"
         self._attr_name = device_name
 
         self._state = None
@@ -131,15 +140,18 @@ class NadAmp(MediaPlayerEntity):
 
     async def async_turn_on(self):
         self._client.power_on()
-        self._attr_state = "On"
+        self._attr_state = MediaPlayerState.ON
 
     async def async_turn_off(self):
         self._client.power_off()
-        self._attr_state = "Off"
+        self._attr_state = MediaPlayerState.OFF
 
     async def async_toggle(self):
         await self._client.power_toggle()
-        self._attr_state = {"On": "Off", "Off": "On"}[self._attr_state]
+        self._attr_state = {
+            MediaPlayerState.ON: MediaPlayerState.OFF,
+            MediaPlayerState.OFF: MediaPlayerState.ON
+        }[self._attr_state]
 
     @property
     def source(self):
@@ -179,26 +191,29 @@ class NadChannel(MediaPlayerEntity):
             | MediaPlayerEntityFeature.SELECT_SOUND_MODE
     )
 
-    def __init__(self, client: NadClient, amp: NadAmp, output_index: int):
+    def __init__(self, client: NadClient, amp: NadAmp, output_index: int, channel: OutputChannel,
+                 inputs: list[InputChannel], dsp_presets: list[Preset]):
+
         self._client = client
         self._output_channel = output_index
 
-        self._attr_sound_mode_list = [sm.name for sm in SoundMode]
-        self._sound_mode = None
+        self._dsp_presets = dsp_presets
+        self._attr_sound_mode_list = [preset.name for preset in dsp_presets]
+        self._sound_mode = channel.dsp_preset
 
         self._attr_device_class = MediaPlayerDeviceClass.SPEAKER
 
-        self._attr_source_list = [source.name for source in InputSource]
-        self._attr_source_list.append("None")
-        self._source = None
+        self._sources = inputs
+        self._attr_source_list = [source.name for source in inputs]
+        self._source = channel.source
 
         self._attr_unique_id = f"{amp.unique_id}_{self._output_channel}"
-        self._attr_name = f"{amp.name} channel {self._output_channel}"
+        self._attr_name = channel.name
         self._attr_device_info = amp.device_info
         self._amp = amp
 
         self._snapshot = None
-        self._volume = None
+        self._volume = channel.gain
         self._update_success = True
 
     def update(self):
@@ -250,7 +265,7 @@ class NadChannel(MediaPlayerEntity):
 
     @property
     def source(self):
-        return self._source.name if self._source is not None else None
+        return self._source.name
 
     @property
     def state(self):
@@ -265,8 +280,8 @@ class NadChannel(MediaPlayerEntity):
 
         await self._amp.ensure_device_is_on()
 
-        self._source = InputSource[source]
-        self._client.set_output_source(self._output_channel, self._source.value)
+        self._source = [s for s in self._sources if s.name == source][0]
+        self._client.set_output_source(self._output_channel, self._source.value + 1)
 
     async def async_select_sound_mode(self, sound_mode):
         if sound_mode not in self._attr_sound_mode_list:
@@ -274,16 +289,17 @@ class NadChannel(MediaPlayerEntity):
 
         await self._amp.ensure_device_is_on()
 
-        self._sound_mode = SoundMode[sound_mode]
-        self._client.set_output_preset(self._output_channel, SoundMode[sound_mode].value)
+        self._sound_mode = [p for p in self._dsp_presets][0]
+
+        self._client.set_output_preset(self._output_channel, self._sound_mode.value + 1)
 
     @property
     def sound_mode(self):
-        return self._sound_mode.name if self._sound_mode is not None else None
+        return self._sound_mode.name
 
     @property
     def enabled(self) -> bool:
-        return self._amp.state == "On"
+        return self._amp.state != MediaPlayerState.OFF
 
 
 class InvalidSource(exceptions.IntegrationError):

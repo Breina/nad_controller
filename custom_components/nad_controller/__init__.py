@@ -25,7 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         client = NadClient(ip, port)
-    except (Exception) as ex:
+    except Exception as ex:
         raise ConfigEntryNotReady from ex
 
     undo_listener = entry.add_update_listener(update_listener)
