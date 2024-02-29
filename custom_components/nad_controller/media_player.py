@@ -77,7 +77,7 @@ async def async_setup_entry(
     for output_channel_index in range(1, 16):
         _LOGGER.info(f"Adding channel {outputs[output_channel_index]}")
         entities.append(
-            NadChannel(hass, client, amp, output_channel_index, outputs[output_channel_index], inputs, presets)
+            NadChannel(hass, client, amp, output_channel_index, outputs[output_channel_index - 1], inputs, presets)
         )
 
     async_add_entities(entities)
