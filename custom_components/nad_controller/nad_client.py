@@ -3,7 +3,6 @@ import socket
 from enum import Enum
 
 import requests
-from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,14 +35,19 @@ class NadClient:
         self._socket.connect((ip, port))
 
     def send(self, hex_string):
-        self._socket.send(bytearray.fromhex(hex_string))
+        try:
+            self._socket.send(bytearray.fromhex(hex_string))
+        except BrokenPipeError as e:
+            _LOGGER.warning(f"Could not reach NAD server at {self.ip}: {str(e)}")
+            return None
+
         response = self._socket.recv(BUFFER_SIZE)
         _LOGGER.debug(response)
         return response
 
     @staticmethod
     def to_string(byte_text: bytes):
-        return byte_text.decode().split("\x00")[0]
+        return byte_text.decode().split("\x00")[0] if byte_text is not None else None
 
     @staticmethod
     def ip_to_hex(ip: str):
@@ -59,7 +63,7 @@ class NadClient:
 
     def global_input_to_hex(self, global_input: int):
         if not 1 <= global_input <= 2:
-            raise ValueError("Channel should be either 1 or 2")
+            raise ValueError(f"Channel should be either 1 or 2, but was {global_input}")
         return self.int_to_hex(global_input - 1)
 
     def channel_to_hex(self, channel: int):
