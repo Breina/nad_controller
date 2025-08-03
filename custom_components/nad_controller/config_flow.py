@@ -14,7 +14,8 @@ from homeassistant.const import CONF_IP_ADDRESS, CONF_PORT
 from homeassistant.data_entry_flow import FlowResult, AbortFlow
 from homeassistant.helpers.service_info.ssdp import (
     ATTR_UPNP_MODEL_NAME,
-    ATTR_UPNP_UDN
+    ATTR_UPNP_UDN,
+    ATTR_UPNP_FRIENDLY_NAME
 )
 
 from .nad_client import NadClient, DEFAULT_TCP_PORT
@@ -161,7 +162,7 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
             {
                 "title_placeholders": {
                     "name": discovery_info.upnp.get(
-                        ssdp.ATTR_UPNP_FRIENDLY_NAME, self.ip
+                        ATTR_UPNP_FRIENDLY_NAME, self.ip
                     )
                 }
             }
