@@ -12,6 +12,10 @@ from homeassistant.components import ssdp
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_IP_ADDRESS, CONF_PORT
 from homeassistant.data_entry_flow import FlowResult, AbortFlow
+from homeassistant.helpers.service_info.ssdp import (
+    ATTR_UPNP_MODEL_NAME,
+    ATTR_UPNP_UDN
+)
 
 from .nad_client import NadClient, DEFAULT_TCP_PORT
 
@@ -132,13 +136,13 @@ class NetworkFlow(ConfigFlow, domain=DOMAIN):
         """
         # Check if required information is present to set the unique_id
         if (
-                ssdp.ATTR_UPNP_MODEL_NAME not in discovery_info.upnp
-                or ssdp.ATTR_UPNP_UDN not in discovery_info.upnp
+                ATTR_UPNP_MODEL_NAME not in discovery_info.upnp
+                or ATTR_UPNP_UDN not in discovery_info.upnp
         ):
             return self.async_abort(reason="not_nad_missing")
 
-        self.model_name = discovery_info.upnp[ssdp.ATTR_UPNP_MODEL_NAME]
-        self.udn = discovery_info.upnp[ssdp.ATTR_UPNP_UDN]
+        self.model_name = discovery_info.upnp[ATTR_UPNP_MODEL_NAME]
+        self.udn = discovery_info.upnp[ATTR_UPNP_UDN]
         self.ip = str(urlparse(discovery_info.ssdp_location).hostname)
         self.port = DEFAULT_TCP_PORT
 
