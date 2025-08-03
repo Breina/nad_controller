@@ -1,4 +1,5 @@
 """The NAD Cl multi-room audio controller integration."""
+
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -32,13 +33,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN][entry.entry_id] = {
         CONF_CLIENT: client,
-        UNDO_UPDATE_LISTENER: undo_listener
+        UNDO_UPDATE_LISTENER: undo_listener,
     }
 
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setups(entry, platform)
-        )
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    )
 
     return True
 
