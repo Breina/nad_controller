@@ -141,7 +141,7 @@ class NadAmp(MediaPlayerEntity):
                 self.update_state_listeners()
             return
 
-        new_state = MediaPlayerState.ON if response.split(':')[1] == "On" else MediaPlayerState.STANDBY
+        new_state = MediaPlayerState.ON if response.split(':')[1] == "On" else MediaPlayerState.OFF
         if new_state != self._attr_state:
             self._attr_state = new_state
             self.update_state_listeners()
