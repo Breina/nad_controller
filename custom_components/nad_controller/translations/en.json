@@ -1,25 +1,102 @@
 {
   "config": {
-    "flow_title": "NAD Multi-room Audio",
+    "flow_title": "{name}",
     "step": {
       "user": {
+        "description": "Enter the address of the NAD amplifier. Its IP control port is 52000 unless it was changed.",
         "data": {
-          "ip_address": "IP",
+          "ip_address": "IP address",
           "port": "Port"
         }
       },
       "confirm": {
-        "description": "Please confirm adding the controller"
+        "description": "Do you want to add {name} ({ip})?"
       }
     },
     "error": {
-      "discovery_error": "Failed to discover a NAD multi-room audio home audio controller",
-      "already_in_progress": "This config flow is already active. Please configure the integration that has been automatically discovered.",
+      "cannot_connect": "Failed to connect",
       "unknown": "Unknown error, please report an issue: https://github.com/Breina/nad_controller/issues"
     },
     "abort": {
-      "cannot_connect": "Failed to connect, please try again, disconnecting mains power and ethernet cables and reconnecting them may help",
-      "not_nad_missing": "Not a NAD multi-room home audio controller, discovery information not complete"
+      "cannot_connect": "Failed to connect, please try again. Disconnecting mains power and ethernet cables and reconnecting them may help.",
+      "already_configured": "Device is already configured"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "amp_problem": {
+        "name": "Amplifier fault"
+      }
+    },
+    "number": {
+      "power_on_delay": {
+        "name": "Power-on delay"
+      }
+    },
+    "select": {
+      "power_on_method": {
+        "name": "Power-on method",
+        "state": {
+          "power_button": "Power button",
+          "always_on": "Always on",
+          "trigger": "12 V trigger",
+          "signal_sense": "Signal sense"
+        }
+      },
+      "standby_time": {
+        "name": "Standby time",
+        "state": {
+          "off": "Off",
+          "5min": "5 min",
+          "10min": "10 min",
+          "15min": "15 min",
+          "20min": "20 min",
+          "30min": "30 min",
+          "60min": "60 min"
+        }
+      },
+      "input_mode": {
+        "state": {
+          "stereo": "Stereo",
+          "mono": "Mono"
+        }
+      }
+    },
+    "sensor": {
+      "temperature_left": {
+        "name": "Left heatsink temperature"
+      },
+      "temperature_right": {
+        "name": "Right heatsink temperature"
+      },
+      "temperature_internal": {
+        "name": "Internal temperature"
+      },
+      "fan_left": {
+        "name": "Left fan"
+      },
+      "fan_right": {
+        "name": "Right fan"
+      },
+      "fan_speed_method": {
+        "name": "Fan speed mode"
+      },
+      "amp_status": {
+        "name": "Amplifier status"
+      }
+    },
+    "switch": {
+      "green_mode": {
+        "name": "Green mode"
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_source": {
+      "message": "Source {option} is not one of {options}"
+    },
+    "invalid_sound_mode": {
+      "message": "Preset {option} is not one of {options}"
     }
   }
 }

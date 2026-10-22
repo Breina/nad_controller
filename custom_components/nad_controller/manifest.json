@@ -1,19 +1,20 @@
 {
   "domain": "nad_controller",
   "name": "NAD Multi-room Audio Controller",
-  "documentation": "https://github.com/Breina/nad_controller",
-  "issue_tracker": "https://github.com/Breina/nad_controller/issues",
   "codeowners": [
     "@Breina"
   ],
-  "requirements": [],
-  "iot_class": "local_polling",
   "config_flow": true,
-  "version": "0.1.2",
+  "documentation": "https://github.com/Breina/nad_controller",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Breina/nad_controller/issues",
+  "requirements": [],
   "ssdp": [
     {
       "manufacturer": "Lenbrook Industries",
       "modelName": "DSP16-60"
     }
-  ]
+  ],
+  "version": "0.2.0"
 }

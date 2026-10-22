@@ -4,47 +4,56 @@
 
 
 This integration integrates with NAD multi-room audio amplifiers.
-It provides control over output volume, output muting, input selection, DSP presets and power cycling.
+It provides control over power, output volume and muting, input selection, DSP presets, zones and the global inputs,
+and reports temperatures, fans and channel protection.
 
 ## Overview
 
-One entity will be created for the controller itself, and one for each channel.
-
 ![An overview of all entities](images/Overview.png)
 
-_The entity is named after the `Unit Name`, as configured in NAD's web interface.
+_The entities are named after the `Unit Name`, as configured in NAD's web interface.
 In this case, that's 'Fortie'._
 
 ![A detail view of one channel](images/Detail_view.png)
 
-_The detail view can be used to configure 
-an output's volume, input channel selection and its sound mode,
-as defined by its presets._
+### Amplifier
 
-### Receiver entity
+The amplifier's media player controls the power. Its source selects one of the two global inputs, which override
+the source of every output, or 'None'.
 
-The receiver is only used to control the power. Available services:
-* `media_player.turn_on`
-* `media_player.turn_off`
-* `media_player.toggle`
-* `media_player.select_source`
+Besides that, the amplifier device has:
 
-Note that using the `select_source` on the receiver will override the channel specific source configuration,
-until it's set back to 'None'.
+* A switch per global input and a number for its gain
+* Configuration of the power-on method, standby time, power-on delay and green mode
+* Input gains and stereo/mono summing per input pair (disabled by default)
+* Temperature, fan and amplifier status sensors, and a protection sensor per channel
+* Identify and restart buttons
 
-### Channel entities
+### Channels
 
-One channel is created for every output. Available services:
-* `media_player.volume_up`
-* `media_player.volume_down`
-* `media_player.volume_set`
-* `media_player.volume_mute`
-* `media_player.select_source`
-* `media_player.select_sound_mode`
+One media player is created for every output, named as in the web interface.
+They support volume, mute, source (the input it plays) and sound mode (the DSP preset).
+The volume range 0-100% maps onto the output gain of -6 dB to +6 dB, which is also available as a number in dB.
+
+> **Note**
+>
+> The amplifier mutes outputs per stereo pair, so muting one channel also mutes its neighbour.
+
+### Zones
+
+Every zone that has channels assigned in the web interface gets a device of its own, so it can be put in an area,
+with a media player that controls all of its channels together.
+Changing a zone's volume moves all of its channels by the same amount, keeping their balance.
 
 ## Compatible devices
 
-* NAD Cl 16-60
+* NAD CI 16-60, tested on firmware V2.27. Firmware before V2.2x numbered channels differently and is not supported.
+
+The integration reads the amplifier's state from its web interface and sends commands over its IP control protocol
+(TCP port 52000). When the web interface can't be reached, for example because password protection is turned on,
+it falls back to reading power, volume and mute over IP control.
+
+Firmware updates are not offered; use NAD's web interface for those.
 
 ## Setup
 

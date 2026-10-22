@@ -1,190 +1,120 @@
-"""Support for interfacing with NAD multi-room audio controller."""
-import logging
-from dataclasses import dataclass
-from enum import Enum
+"""Media players for the amplifier, each output channel and each zone."""
+from __future__ import annotations
 
-from homeassistant import exceptions
+import logging
+from typing import Any
+
 from homeassistant.components.media_player import (
+    MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
-    MediaPlayerDeviceClass, MediaPlayerState
+    MediaPlayerState,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import CONF_CLIENT
-from .config_flow import DOMAIN
-from .nad_client import NadClient
+from .const import DOMAIN
+from .coordinator import NadConfigEntry, NadCoordinator
+from .entity import NadEntity, NadZoneEntity
+from .nad_client import CHANNEL_COUNT, GAIN_STEP, GLOBAL_COUNT, MAX_GAIN, MIN_GAIN, NadState
 
 _LOGGER = logging.getLogger(__name__)
 
-
-@dataclass
-class InputChannel:
-    name: str
-    gain: float
-    value: int
-
-
-@dataclass
-class Preset:
-    name: str
-    value: int
-
-
-@dataclass
-class OutputChannel:
-    name: str
-    gain: float
-    value: int
-    source: InputChannel
-    dsp_preset: Preset
+PARALLEL_UPDATES = 0
+NO_GLOBAL_SOURCE = "None"
+GAIN_RANGE = MAX_GAIN - MIN_GAIN
 
 
 async def async_setup_entry(
         hass: HomeAssistant,
-        config_entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+        entry: NadConfigEntry,
+        async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the NAD Cl multi-room audio controller entry."""
-    data = hass.data[DOMAIN][config_entry.entry_id]
-    client: NadClient = data[CONF_CLIENT]
-
-    in_outs = await hass.async_add_executor_job(client.read_in_out)
-
-    inputs = [InputChannel(
-        in_outs['input-names'][i]['name'],
-        float(in_outs['input-gain'][i]),
-        int(in_outs['input-names'][i]['value'])
-    ) for i in range(len(in_outs['input-names']))]
-
-    presets = [Preset(dsp_item['name'], int(dsp_item['value'])) for dsp_item in in_outs['dsp-preset-items']]
-
-    outputs = [OutputChannel(
-        in_outs['output-names'][i]['name'],
-        float(in_outs['output-gain'][i]),
-        int(in_outs['output-names'][i]['value']),
-        inputs[in_outs['sources'][i]],
-        presets[in_outs['dsp-presets'][i]]
-    ) for i in range(len(in_outs['output-names']))]
-
-    amp = NadAmp(client)
-
-    entities = [amp]
-    for output_channel_index in range(1, 17):
-        _LOGGER.info(f"Adding channel {outputs[output_channel_index - 1]}")
-        entities.append(
-            NadChannel(hass, client, amp, output_channel_index, outputs[output_channel_index - 1], inputs, presets)
-        )
-
+    coordinator = entry.runtime_data
+    entities: list[MediaPlayerEntity] = [NadAmp(coordinator)]
+    entities += [NadChannel(coordinator, channel) for channel in range(1, CHANNEL_COUNT + 1)]
+    entities += [NadZone(coordinator, zone) for zone in coordinator.data.zones]
     async_add_entities(entities)
 
 
-class GlobalSource(Enum):
-    Global1 = 1
-    Global2 = 2
+def gain_to_volume(gain: float) -> float:
+    return (gain - MIN_GAIN) / GAIN_RANGE
 
 
-class NadAmp(MediaPlayerEntity):
+def volume_to_gain(volume: float) -> float:
+    return clamp_gain(volume * GAIN_RANGE + MIN_GAIN)
+
+
+def clamp_gain(gain: float) -> float:
+    return min(MAX_GAIN, max(MIN_GAIN, round(gain / GAIN_STEP) * GAIN_STEP))
+
+
+def channel_state(data: NadState, channels: list[int]) -> MediaPlayerState:
+    if not data.power:
+        return MediaPlayerState.OFF
+    if any(data.signals[channel - 1] for channel in channels if channel <= len(data.signals)):
+        return MediaPlayerState.PLAYING
+    return MediaPlayerState.IDLE
+
+
+def validate_option(option: str, options: list[str], translation_key: str) -> int:
+    if option not in options:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key=translation_key,
+            translation_placeholders={"option": option, "options": ", ".join(options)},
+        )
+    return options.index(option)
+
+
+class NadAmp(NadEntity, MediaPlayerEntity):
+    """The amplifier: power and the global inputs that override every output's source."""
+
+    _attr_name = None
+    _attr_device_class = MediaPlayerDeviceClass.RECEIVER
     _attr_supported_features = (
             MediaPlayerEntityFeature.TURN_ON
             | MediaPlayerEntityFeature.TURN_OFF
             | MediaPlayerEntityFeature.SELECT_SOURCE
     )
 
-    def __init__(self, client: NadClient):
-        self._client = client
-
-        self._attr_device_class = MediaPlayerDeviceClass.RECEIVER
-
-        device_name = client.get_device_name()
-        serial_number = client.get_serial_number()
-        model = client.get_device_model()
-        sw_version = client.get_firmware_version()
-
-        self._attr_source_list = [source.name for source in GlobalSource.__members__.values()]
-        self._attr_source_list.append("None")
-        self._source = None
-
-        self._attr_device_info = DeviceInfo(
-            configuration_url=f"http://{client.ip}",
-            identifiers={(DOMAIN, serial_number)},
-            manufacturer="NAD",
-            model=model,
-            name=device_name,
-            sw_version=sw_version
-        )
-
-        self._attr_unique_id = f"{DOMAIN}_{serial_number}"
-        self._attr_name = device_name
-
-        self._state = None
-        self._state_listeners = []
-
-    def add_state_listener(self, listener):
-        self._state_listeners.append(listener)
-
-    def update_state_listeners(self):
-        _LOGGER.info(f"Updating all listeners to {self._attr_state}")
-        for listener in self._state_listeners:
-            listener.async_schedule_update_ha_state()
-
-    async def async_update(self):
-        """Retrieve latest state."""
-        response = self._client.get_power_status()
-        if not response:
-            if self._attr_state != MediaPlayerState.OFF:
-                self._attr_state = MediaPlayerState.OFF
-                self.update_state_listeners()
-            return
-
-        new_state = MediaPlayerState.ON if response.split(':')[1] == "On" else MediaPlayerState.OFF
-        if new_state != self._attr_state:
-            self._attr_state = new_state
-            self.update_state_listeners()
-
-    async def async_turn_on(self):
-        self._client.power_on()
-        self._attr_state = MediaPlayerState.ON
-
-    async def async_turn_off(self):
-        self._client.power_off()
-        self._attr_state = MediaPlayerState.OFF
-
-    async def async_toggle(self):
-        await self._client.power_toggle()
-        self._attr_state = {
-            MediaPlayerState.ON: MediaPlayerState.OFF,
-            MediaPlayerState.OFF: MediaPlayerState.ON
-        }[self._attr_state]
+    @property
+    def state(self) -> MediaPlayerState:
+        return MediaPlayerState.ON if self.coordinator.data.power else MediaPlayerState.OFF
 
     @property
-    def source(self):
-        return self._source.name if self._source is not None else None
+    def source_list(self) -> list[str]:
+        return [NO_GLOBAL_SOURCE, *self.coordinator.data.global_names]
 
-    async def async_select_source(self, source):
-        if source not in self._attr_source_list:
-            raise InvalidSource(f"The global source should be one of {self._attr_source_list}")
+    @property
+    def source(self) -> str:
+        data = self.coordinator.data
+        enabled = [name for name, on in zip(data.global_names, data.global_enabled) if on]
+        return enabled[0] if enabled else NO_GLOBAL_SOURCE
 
-        new_source = GlobalSource[source] if source != "None" else None
-        _LOGGER.info(f"CHANGING SOURCE {self._source} TO {new_source}")
+    async def async_turn_on(self) -> None:
+        await self.coordinator.async_command(self.coordinator.client.power_on())
 
-        if self._source == new_source:
-            return
+    async def async_turn_off(self) -> None:
+        await self.coordinator.async_command(self.coordinator.client.power_off())
 
-        if self._source is not None:
-            self._client.set_global_control(self._source.value, False)
+    async def async_select_source(self, source: str) -> None:
+        selected = validate_option(source, self.source_list, "invalid_source") - 1
 
-        self._source = new_source
+        async def select() -> None:
+            # Switch the other global off first, so outputs never briefly follow both
+            for global_index in sorted(range(GLOBAL_COUNT), key=lambda g: g == selected):
+                await self.coordinator.client.set_global_enabled(global_index, global_index == selected)
 
-        if self._source is not None:
-            self._client.set_global_control(self._source.value, True)
+        await self.coordinator.async_command(select())
 
 
-class NadChannel(MediaPlayerEntity):
+class NadChannelGroup(MediaPlayerEntity):
+    """Volume, mute, source and preset over a set of output channels."""
+
+    _attr_device_class = MediaPlayerDeviceClass.SPEAKER
     _attr_supported_features = (
             MediaPlayerEntityFeature.VOLUME_MUTE
             | MediaPlayerEntityFeature.VOLUME_SET
@@ -192,112 +122,138 @@ class NadChannel(MediaPlayerEntity):
             | MediaPlayerEntityFeature.SELECT_SOURCE
             | MediaPlayerEntityFeature.SELECT_SOUND_MODE
     )
-
-    def __init__(self, hass: HomeAssistant, client: NadClient, amp: NadAmp, output_index: int, channel: OutputChannel,
-                 inputs: list[InputChannel], dsp_presets: list[Preset]):
-        self.hass = hass
-        self._client = client
-        self._output_channel = output_index
-
-        self._dsp_presets = dsp_presets
-        self._attr_sound_mode_list = [preset.name for preset in dsp_presets]
-        self._sound_mode = channel.dsp_preset
-
-        self._attr_device_class = MediaPlayerDeviceClass.SPEAKER
-
-        self._sources = inputs
-        self._attr_source_list = [source.name for source in inputs]
-        self._source = channel.source
-
-        self._attr_unique_id = f"{amp.unique_id}_{self._output_channel}"
-        self._attr_name = channel.name
-        self._attr_device_info = amp.device_info
-        self._amp = amp
-        self._amp.add_state_listener(self)
-
-        self._snapshot = None
-        self._volume = channel.gain
-
-    async def async_update(self):
-        """Retrieve latest state."""
-        if self._amp.state == MediaPlayerState.ON:
-            self._attr_state = MediaPlayerState.ON
-        else:
-            self._attr_state = STATE_UNAVAILABLE
-
-        response = self._client.get_output_gain(self._output_channel)
-        if response is None:
-            return
-        self._volume = response
-
-        response = self._client.get_output_mute(self._output_channel)
-        if response is None:
-            return
-        self._attr_is_volume_muted = response
-
-    def available(self) -> bool:
-        return self._amp.state == MediaPlayerState.ON
+    _attr_volume_step = GAIN_STEP / GAIN_RANGE
+    coordinator: NadCoordinator
 
     @property
-    def volume_level(self):
-        """Volume level of the media player (0..1)."""
-        if self._volume is None:
-            return None
-        return (float(self._volume) + 6) / 12
+    def channels(self) -> list[int]:
+        raise NotImplementedError
+
+    def _common(self, values: list[Any]) -> Any:
+        picked = {values[channel - 1] for channel in self.channels}
+        return picked.pop() if len(picked) == 1 else None
+
+    @property
+    def gains(self) -> list[float]:
+        return [self.coordinator.data.output_gains[channel - 1] for channel in self.channels]
+
+    @property
+    def state(self) -> MediaPlayerState:
+        return channel_state(self.coordinator.data, self.channels)
+
+    @property
+    def volume_level(self) -> float | None:
+        gains = self.gains
+        return gain_to_volume(sum(gains) / len(gains)) if gains else None
+
+    @property
+    def is_volume_muted(self) -> bool:
+        return all(self.coordinator.data.output_mutes[channel - 1] for channel in self.channels)
+
+    @property
+    def source_list(self) -> list[str]:
+        return self.coordinator.data.input_names
+
+    @property
+    def source(self) -> str | None:
+        source = self._common(self.coordinator.data.sources)
+        return self.source_list[source] if source is not None and source < len(self.source_list) else None
+
+    @property
+    def sound_mode_list(self) -> list[str]:
+        return [name for _, name in sorted(self.coordinator.data.preset_names.items())]
+
+    @property
+    def sound_mode(self) -> str | None:
+        preset = self._common(self.coordinator.data.presets)
+        return self.coordinator.data.preset_names.get(preset) if preset is not None else None
+
+    async def _shift_gain(self, delta: float) -> None:
+        """Move every channel by the same amount, which keeps the balance between them."""
+        client = self.coordinator.client
+
+        async def shift() -> None:
+            for channel, gain in zip(self.channels, self.gains):
+                new_gain = clamp_gain(gain + delta)
+                if new_gain != gain:
+                    await client.set_output_gain(channel, new_gain)
+
+        await self.coordinator.async_command(shift())
 
     async def async_set_volume_level(self, volume: float) -> None:
-        self._volume = volume * 12 - 6
-        self._client.set_output_gain(self._output_channel, self._volume)
+        gains = self.gains
+        await self._shift_gain(volume_to_gain(volume) - sum(gains) / len(gains))
 
-    async def async_volume_up(self):
-        self._client.set_output_gain(self._output_channel, self._volume + 0.5)
-        self._volume += 0.5
+    async def async_volume_up(self) -> None:
+        await self._shift_gain(GAIN_STEP)
 
-    async def async_volume_down(self):
-        self._client.set_output_gain(self._output_channel, self._volume - 0.5)
-        self._volume -= 0.5
+    async def async_volume_down(self) -> None:
+        await self._shift_gain(-GAIN_STEP)
+
+    async def _for_each_channel(self, command) -> None:
+        async def run() -> None:
+            for channel in self.channels:
+                await command(channel)
+
+        await self.coordinator.async_command(run())
 
     async def async_mute_volume(self, mute: bool) -> None:
-        self._client.set_output_mute(self._output_channel, mute)
-        self._attr_is_volume_muted = mute
+        client = self.coordinator.client
+        await self._for_each_channel(lambda channel: client.set_output_mute(channel, mute))
+
+    async def async_select_source(self, source: str) -> None:
+        input_index = validate_option(source, self.source_list, "invalid_source")
+        client = self.coordinator.client
+        await self._for_each_channel(lambda channel: client.set_output_source(channel, input_index))
+
+    async def async_select_sound_mode(self, sound_mode: str) -> None:
+        validate_option(sound_mode, self.sound_mode_list, "invalid_sound_mode")
+        preset = next(value for value, name in self.coordinator.data.preset_names.items() if name == sound_mode)
+        client = self.coordinator.client
+        await self._for_each_channel(lambda channel: client.set_output_preset(channel, preset))
+
+
+class NadChannel(NadEntity, NadChannelGroup):
+    """One output channel. The amplifier mutes channels per stereo pair."""
+
+    def __init__(self, coordinator: NadCoordinator, channel: int):
+        super().__init__(coordinator, str(channel))
+        self._channel = channel
 
     @property
-    def source(self):
-        return self._source.name
-
-    async def async_select_source(self, source):
-        if source not in self._attr_source_list:
-            raise InvalidSource(f"The global source should be one of {self._attr_source_list}")
-
-        self._source = [s for s in self._sources if s.name == source][0]
-        self._client.set_output_source(self._output_channel, self._source.value + 1)
-
-    async def async_select_sound_mode(self, sound_mode):
-        if sound_mode not in self._attr_sound_mode_list:
-            raise InvalidSoundMode(f"The sound mode should be one of {self._attr_sound_mode_list}")
-
-        self._sound_mode = [p for p in self._dsp_presets][0]
-
-        self._client.set_output_preset(self._output_channel, self._sound_mode.value + 1)
+    def channels(self) -> list[int]:
+        return [self._channel]
 
     @property
-    def sound_mode(self):
-        return self._sound_mode.name
+    def name(self) -> str:
+        return self.coordinator.data.output_names[self._channel - 1]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        data = self.coordinator.data
+        attributes: dict[str, Any] = {"channel": self._channel, "gain_db": data.output_gains[self._channel - 1]}
+        if self._channel <= len(data.protection):
+            attributes["protection"] = data.protection[self._channel - 1]
+        zones = [zone.name for zone in data.zones if self._channel in zone.channels]
+        if zones:
+            attributes["zones"] = zones
+        return attributes
 
 
-class InvalidSource(exceptions.IntegrationError):
-    def __init__(self, msg: str):
-        """Error to indicate we cannot connect."""
-        self.msg = msg
+class NadZone(NadZoneEntity, NadChannelGroup):
+    """A zone as configured in the web UI, controlling all of its channels together."""
 
-    def __str__(self) -> str:
-        return self.msg
+    _attr_name = None
 
+    @property
+    def channels(self) -> list[int]:
+        zone = self.zone
+        return zone.channels if zone else []
 
-class InvalidSoundMode(exceptions.IntegrationError):
-    def __init__(self, msg: str):
-        """Error to indicate we cannot connect."""
-        self.msg = msg
-
-    def __str__(self) -> str:
-        return self.msg
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        data = self.coordinator.data
+        return {
+            "channels": [data.output_names[channel - 1] for channel in self.channels],
+            "gains_db": self.gains,
+        }

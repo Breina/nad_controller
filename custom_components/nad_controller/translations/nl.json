@@ -1,25 +1,102 @@
 {
   "config": {
-    "flow_title": "NAD meerkamersgeluidbestuurder",
+    "flow_title": "{name}",
     "step": {
       "user": {
+        "description": "Geef het adres van de NAD-versterker op. De IP-bedieningspoort is 52000, tenzij die gewijzigd werd.",
         "data": {
-          "ip_address": "IP",
+          "ip_address": "IP-adres",
           "port": "Poort"
         }
       },
       "confirm": {
-        "description": "Gelieve de aanmaak hiervan te bevestigen"
+        "description": "Wil je {name} ({ip}) toevoegen?"
       }
     },
     "error": {
-      "discovery_error": "NAD meerkamersgeluidbestuurder kon niet worden gevonden",
-      "already_in_progress": "Deze configuratie toveraar is al actief. Ga verder met degene die al actief is.",
+      "cannot_connect": "Kon niet verbinden",
       "unknown": "Onbekende fout, gelieve dat even te melden: https://github.com/Breina/nad_controller/issues"
     },
     "abort": {
       "cannot_connect": "Kon niet verbinden, probeer a.u.b. opnieuw. Moest het dan nog niet lukken, probeer het apparaat herop te starten en uw verbinding te controleren.",
-      "not_nad_missing": "Dit is geen NAD meerkamersgeluidbestuurder, ontdekkingsinformatie onvolledig"
+      "already_configured": "Apparaat is al geconfigureerd"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "amp_problem": {
+        "name": "Versterkerfout"
+      }
+    },
+    "number": {
+      "power_on_delay": {
+        "name": "Inschakelvertraging"
+      }
+    },
+    "select": {
+      "power_on_method": {
+        "name": "Inschakelmethode",
+        "state": {
+          "power_button": "Aan/uit-knop",
+          "always_on": "Altijd aan",
+          "trigger": "12 V-trigger",
+          "signal_sense": "Signaaldetectie"
+        }
+      },
+      "standby_time": {
+        "name": "Stand-bytijd",
+        "state": {
+          "off": "Uit",
+          "5min": "5 min",
+          "10min": "10 min",
+          "15min": "15 min",
+          "20min": "20 min",
+          "30min": "30 min",
+          "60min": "60 min"
+        }
+      },
+      "input_mode": {
+        "state": {
+          "stereo": "Stereo",
+          "mono": "Mono"
+        }
+      }
+    },
+    "sensor": {
+      "temperature_left": {
+        "name": "Temperatuur linkerkoelblok"
+      },
+      "temperature_right": {
+        "name": "Temperatuur rechterkoelblok"
+      },
+      "temperature_internal": {
+        "name": "Interne temperatuur"
+      },
+      "fan_left": {
+        "name": "Linkerventilator"
+      },
+      "fan_right": {
+        "name": "Rechterventilator"
+      },
+      "fan_speed_method": {
+        "name": "Ventilatormodus"
+      },
+      "amp_status": {
+        "name": "Versterkerstatus"
+      }
+    },
+    "switch": {
+      "green_mode": {
+        "name": "Groene modus"
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_source": {
+      "message": "Bron {option} is niet een van {options}"
+    },
+    "invalid_sound_mode": {
+      "message": "Preset {option} is niet een van {options}"
     }
   }
 }
